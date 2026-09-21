@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="A tiny playful classifier that sorts a fictional startup job offer into a risk/reward type.">
+<meta name="description" content="A tiny playful classifier that sorts a fictional startup job offer into a risk/reward type by comparing it to labeled example offers.">
 <meta name="theme-color" content="#101114">
 <title>Startup Offer Sorter</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%84%3C/text%3E%3C/svg%3E">
@@ -12,12 +12,13 @@
   *{box-sizing:border-box}
   html{font-size:16px}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+  button{font:inherit;color:inherit}
   .shell{max-width:920px;margin:auto;padding:26px 24px 48px}
   header{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
   .brand{font-weight:900;letter-spacing:-.04em;font-size:1.35rem}
   .chapter{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
   h1{font-size:clamp(1.9rem,5vw,3.1rem);line-height:.95;letter-spacing:-.045em;margin:0 0 10px}
-  .lede{font-size:1.05rem;max-width:640px;line-height:1.5;color:#393a38;margin-bottom:24px}
+  .lede{font-size:1.05rem;max-width:660px;line-height:1.5;color:#393a38;margin-bottom:24px}
   .card{border:2px solid var(--ink);background:#fff;padding:22px;box-shadow:var(--shadow);margin-bottom:22px}
   .field{margin-bottom:20px}
   .field:last-child{margin-bottom:0}
@@ -31,7 +32,7 @@
   .preset-btn[aria-pressed="true"]{background:var(--acid);outline:3px solid var(--orange);outline-offset:1px}
   .result{border:2px solid var(--ink);padding:20px;background:var(--ink);color:#fff}
   .result .eyebrow{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.08em;font-size:.76rem;color:#bcbab2;margin-bottom:8px}
-  .result h2{margin:0 0 8px;font-size:clamp(1.6rem,4vw,2.3rem);letter-spacing:-.03em}
+  .result h2{margin:0;font-size:clamp(1.6rem,4vw,2.3rem);letter-spacing:-.03em}
   .result p{margin:0 0 6px;color:#d6d6d2;line-height:1.5}
   .result-top{display:flex;align-items:center;gap:16px;margin-bottom:8px}
   .result-icon{font-size:3rem;line-height:1;filter:drop-shadow(2px 2px 0 rgba(0,0,0,.3))}
@@ -40,36 +41,50 @@
   .badge.lottery{background:var(--blue)}
   .badge.steady{background:#2f8f4e}
   .badge.jackpot{background:var(--orange)}
-  .grid-note{margin-top:22px;border:1px solid var(--ink);background:#ece9df;padding:16px}
-  .grid-note b{display:block;margin-bottom:6px;font-size:.9rem}
-  table.rule-grid{width:100%;border-collapse:collapse;margin-top:10px;font-size:.82rem}
-  table.rule-grid th,table.rule-grid td{border:1px solid var(--ink);padding:6px 8px;text-align:center}
-  table.rule-grid th{background:var(--ink);color:#fff;font-weight:800}
-  table.rule-grid td.hi{outline:3px solid var(--orange);outline-offset:-3px;font-weight:800}
+  .neighbors{list-style:none;margin:8px 0 10px;padding:0;display:grid;gap:6px}
+  .neighbors li{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;background:#1e2026;border:1px solid #444;padding:8px 10px;font-size:.88rem}
+  .neighbors .rank{font:800 .72rem ui-monospace,monospace;background:var(--acid);color:var(--ink);padding:2px 6px}
+  .neighbors .dist{margin-left:auto;font:700 .74rem ui-monospace,monospace;color:#bcbab2}
+  .badge.unsure{background:#77766f}
+  .teach h2{font-size:1.35rem;letter-spacing:-.03em;margin:0 0 6px}
+  .teach p{margin:0 0 12px;line-height:1.5;font-size:.94rem}
+  .teach-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .teach-btn{border:2px solid var(--ink);background:#fff;padding:9px 12px;font-weight:800;font-size:.84rem;box-shadow:2px 2px 0 var(--ink);cursor:pointer}
+  .teach-btn:hover{background:var(--acid)}
+  .teach-btn.reset{background:var(--paper);box-shadow:none;border-width:1px;font-weight:700;margin-left:auto}
+  .teach-msg{margin-top:10px!important;font-weight:700;color:#2f6f45;min-height:1.2em}
+  .how{margin-bottom:22px;border:1px solid var(--ink);background:#ece9df;padding:16px}
+  .how b{display:block;margin-bottom:6px;font-size:.9rem}
+  .how ol{margin:6px 0 0;padding-left:20px;font-size:.86rem;line-height:1.5}
+  table.examples{width:100%;border-collapse:collapse;margin-top:10px;font-size:.84rem;background:#fff}
+  table.examples th,table.examples td{border:1px solid var(--ink);padding:6px 8px;text-align:left}
+  table.examples th{background:var(--ink);color:#fff;font-weight:800}
+  table.examples tr.nn td{background:var(--acid);font-weight:700}
+  table.examples .tag{font:800 .66rem ui-monospace,monospace;background:var(--orange);color:#fff;padding:1px 5px;margin-left:6px}
   .tb-credit{margin-top:30px;padding-top:14px;border-top:2px solid var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;color:var(--muted)}
-  @media(max-width:560px){.shell{padding:16px 14px 34px}.card{padding:16px}}
+  @media(max-width:560px){.shell{padding:16px 14px 34px}.card{padding:16px}.teach-btn.reset{margin-left:0}}
 </style>
 </head>
 <body>
 <main class="shell">
   <header>
     <div class="brand"><span aria-hidden="true">🦄</span> STARTUP OFFER / SORTER</div>
-    <div class="chapter">A tiny 3-input classifier</div>
+    <div class="chapter">A tiny nearest-example classifier</div>
   </header>
 
   <h1>What type of startup offer is this?</h1>
-  <p class="lede">This is not financial advice. It's a toy classifier that looks at three numbers &mdash; salary, equity, and company size &mdash; and sorts a fictional offer into one of four playful buckets. Move the sliders or try a preset offer below.</p>
+  <p class="lede">This is a toy, not financial advice. It compares your offer to a set of labeled example offers and copies the label of the closest ones. Move the sliders, then teach it a new example and watch its answers change.</p>
 
   <div class="card">
     <div class="field">
       <label for="salary">Salary (EUR / year) <span class="readout" id="salaryOut">60K</span></label>
       <input type="range" id="salary" min="30" max="120" step="1" value="60">
-      <div class="scale"><span>30K</span><span>low &lt; 60 &middot; mid 60&ndash;70 &middot; high &gt; 70</span><span>120K</span></div>
+      <div class="scale"><span>30K</span><span>120K</span></div>
     </div>
     <div class="field">
       <label for="equity">Equity (%) <span class="readout" id="equityOut">0.20%</span></label>
       <input type="range" id="equity" min="0" max="100" step="1" value="20">
-      <div class="scale"><span>0%</span><span>low &lt; 0.2 &middot; mid 0.2&ndash;0.4 &middot; high &gt; 0.4</span><span>1.0%</span></div>
+      <div class="scale"><span>0%</span><span>1.0%</span></div>
     </div>
     <div class="field">
       <label for="employees">Number of employees <span class="readout" id="employeesOut">20</span></label>
@@ -85,30 +100,46 @@
     <button class="preset-btn" data-preset="3">Bust example</button>
   </div>
 
-  <div class="card result" id="result">
+  <div class="card result" id="result" aria-live="polite">
     <div class="eyebrow">The classifier says</div>
     <div class="result-top">
       <span class="result-icon" id="resultIcon" aria-hidden="true">💵</span>
       <div>
         <span class="badge" id="badge">Steady Paycheck</span>
-        <h2 id="label" style="margin:0">Steady Paycheck</h2>
+        <h2 id="label">Steady Paycheck</h2>
       </div>
     </div>
     <p id="blurb"></p>
-    <p id="reason"></p>
+    <p><strong>Why:</strong> these are the 3 closest labeled examples, and they vote.</p>
+    <ul class="neighbors" id="neighbors"></ul>
     <p id="stageNote"></p>
   </div>
 
-  <div class="grid-note">
+  <div class="card teach">
+    <h2>Teach it a new example</h2>
+    <p>Set the sliders to an offer, then tell the classifier what type it is. It will use your example from now on.</p>
+    <div class="teach-row">
+      <button class="teach-btn" data-teach="steady">💵 Steady Paycheck</button>
+      <button class="teach-btn" data-teach="lottery">🎟️ Lottery Ticket</button>
+      <button class="teach-btn" data-teach="jackpot">🦄 Jackpot</button>
+      <button class="teach-btn" data-teach="bust">💀 Bust</button>
+      <button class="teach-btn reset" id="resetBtn">Reset examples</button>
+    </div>
+    <p class="teach-msg" id="teachMsg"></p>
+  </div>
+
+  <div class="how">
     <b>How this decision actually gets made</b>
-    <p style="margin:0 0 6px;font-size:.86rem;line-height:1.5">The classifier only has a fixed rule &mdash; it never learns or trains on anything. It first turns your salary and equity into "low / mid / high," then looks up that pair in this table. Company size doesn't change the label; it only changes the explanation text above.</p>
-    <table class="rule-grid" id="ruleGrid">
-      <thead><tr><th>Salary \ Equity</th><th>Low</th><th>Mid</th><th>High</th></tr></thead>
-      <tbody>
-        <tr><th>Low</th><td data-cell="low-low">Bust</td><td data-cell="low-mid">Lottery Ticket</td><td data-cell="low-high">Lottery Ticket</td></tr>
-        <tr><th>Mid</th><td data-cell="mid-low">Steady Paycheck</td><td data-cell="mid-mid">Steady Paycheck</td><td data-cell="mid-high">Jackpot</td></tr>
-        <tr><th>High</th><td data-cell="high-low">Steady Paycheck</td><td data-cell="high-mid">Jackpot</td><td data-cell="high-high">Jackpot</td></tr>
-      </tbody>
+    <ol>
+      <li>Every offer becomes three numbers on a 0&ndash;1 scale: salary, equity, and company size (size is on a log scale, so 8 vs 15 people matters more than 150 vs 157).</li>
+      <li>The classifier measures the distance from your offer to every labeled example. Smaller distance means more similar.</li>
+      <li>The 3 closest examples vote. If the vote is split, the single closest example wins.</li>
+      <li>If even the closest example is far away, it says "Not sure" instead of guessing. Teaching it a similar example fixes that.</li>
+    </ol>
+    <p style="margin:8px 0 0;font-size:.86rem;line-height:1.5">It has no rule like "salary over 70K is high." The only thing it knows is the examples below, so different examples give different answers.</p>
+    <table class="examples" id="examplesTable">
+      <thead><tr><th>Type</th><th>Salary</th><th>Equity</th><th>Employees</th></tr></thead>
+      <tbody id="examplesBody"></tbody>
     </table>
   </div>
 
@@ -116,63 +147,80 @@
 </main>
 
 <script>
-  const PRESETS=[
-    {salary:75,equity:10,employees:60},
-    {salary:45,equity:60,employees:8},
-    {salary:70,equity:50,employees:30},
-    {salary:50,equity:10,employees:15}
-  ];
   const LABELS={
     bust:{name:'Bust',cls:'bust',icon:'💀',blurb:'Low cash, low equity — nothing to fall back on and nothing to dream about.'},
     lottery:{name:'Lottery Ticket',cls:'lottery',icon:'🎟️',blurb:'Thin salary, but a real shot at an equity payout if the company works out.'},
     steady:{name:'Steady Paycheck',cls:'steady',icon:'💵',blurb:'Solid, dependable cash. The equity here is just a bonus, not the main event.'},
     jackpot:{name:'Jackpot',cls:'jackpot',icon:'🦄',blurb:'Good salary AND good equity at once — rare, like spotting an actual unicorn startup.'}
   };
-  const GRID={
-    low:{low:'bust',mid:'lottery',high:'lottery'},
-    mid:{low:'steady',mid:'steady',high:'jackpot'},
-    high:{low:'steady',mid:'jackpot',high:'jackpot'}
-  };
+  const DEFAULTS=[
+    {s:75,e:0.10,n:60,l:'steady'},{s:85,e:0.05,n:120,l:'steady'},{s:65,e:0.15,n:45,l:'steady'},{s:72,e:0.30,n:80,l:'steady'},
+    {s:45,e:0.60,n:8,l:'lottery'},{s:40,e:0.90,n:5,l:'lottery'},{s:55,e:0.35,n:12,l:'lottery'},{s:50,e:0.75,n:18,l:'lottery'},
+    {s:70,e:0.50,n:30,l:'jackpot'},{s:90,e:0.80,n:40,l:'jackpot'},{s:80,e:0.45,n:70,l:'jackpot'},{s:100,e:0.60,n:25,l:'jackpot'},
+    {s:50,e:0.10,n:15,l:'bust'},{s:40,e:0.05,n:10,l:'bust'},{s:55,e:0.15,n:25,l:'bust'},{s:35,e:0.10,n:6,l:'bust'}
+  ];
+  const PRESETS=[DEFAULTS[0],DEFAULTS[4],DEFAULTS[8],DEFAULTS[12]];
+  const K=3,FAR=0.5;
+  let examples=DEFAULTS.map(x=>({...x}));
+
   const $=s=>document.querySelector(s);
   const salaryEl=$('#salary'),equityEl=$('#equity'),employeesEl=$('#employees');
-  const salaryOut=$('#salaryOut'),equityOut=$('#equityOut'),employeesOut=$('#employeesOut');
 
-  function salaryLevel(v){return v<60?'low':(v<=70?'mid':'high')}
-  function equityLevel(v){return v<0.2?'low':(v<=0.4?'mid':'high')}
-  function employeeStage(v){return v<20?'early':(v<=50?'growth':'scale')}
-
+  function features(s,e,n){return [(s-30)/90,e/1,Math.log(n)/Math.log(200)]}
+  function distance(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2])}
+  function employeeStage(n){return n<20?'early':(n<=50?'growth':'scale')}
   function stageNoteFor(stage){
-    if(stage==='early')return 'This is an early-stage company (fewer than 20 people), so that equity number is a bigger bet — it could end up worth a lot, or nothing at all.';
+    if(stage==='early')return 'This is an early-stage company (fewer than 20 people), so the equity is a bigger bet — it could end up worth a lot, or nothing at all.';
     if(stage==='growth')return 'This is a growth-phase company (20–50 people), so the equity has a little more track record behind it, but it is still far from guaranteed.';
     return 'This is a scale-up (more than 50 people), so this offer is probably the most predictable version of itself.';
   }
 
+  function classify(s,e,n){
+    const q=features(s,e,n);
+    const ranked=examples.map((x,i)=>({x,i,d:distance(q,features(x.s,x.e,x.n))})).sort((a,b)=>a.d-b.d);
+    const nearest=ranked.slice(0,Math.min(K,ranked.length));
+    const votes={};
+    nearest.forEach(r=>{const v=votes[r.x.l]||(votes[r.x.l]={count:0,best:Infinity});v.count++;v.best=Math.min(v.best,r.d)});
+    const winner=Object.keys(votes).sort((a,b)=>votes[b].count-votes[a].count||votes[a].best-votes[b].best)[0];
+    return {winner,nearest};
+  }
+
+  function currentOffer(){return {s:Number(salaryEl.value),e:Number(equityEl.value)/100,n:Number(employeesEl.value)}}
+
+  function renderExamples(nearestIdx){
+    $('#examplesBody').innerHTML=examples.map((x,i)=>{
+      const rank=nearestIdx.indexOf(i);
+      const info=LABELS[x.l];
+      return `<tr${rank>-1?' class="nn"':''}><td>${info.icon} ${info.name}${x.custom?'<span class="tag">YOURS</span>':''}${rank>-1?` &middot; closest #${rank+1}`:''}</td><td>${x.s}K</td><td>${x.e.toFixed(2)}%</td><td>${x.n}</td></tr>`;
+    }).join('');
+  }
+
   function render(){
-    const salary=Number(salaryEl.value),equityPct=Number(equityEl.value)/100,employees=Number(employeesEl.value);
-    salaryOut.textContent=`${salary}K`;
-    equityOut.textContent=`${equityPct.toFixed(2)}%`;
-    employeesOut.textContent=employees;
+    const {s,e,n}=currentOffer();
+    $('#salaryOut').textContent=`${s}K`;
+    $('#equityOut').textContent=`${e.toFixed(2)}%`;
+    $('#employeesOut').textContent=n;
 
-    const sLevel=salaryLevel(salary),eLevel=equityLevel(equityPct),stage=employeeStage(employees);
-    const key=GRID[sLevel][eLevel];
-    const info=LABELS[key];
-
+    const {winner,nearest}=classify(s,e,n);
+    const guess=LABELS[winner];
+    const unsure=nearest[0].d>FAR;
+    const info=unsure?{name:'Not sure',cls:'unsure',icon:'❓',blurb:`This offer is too far from every example to pick a type with confidence. Its best guess would be ${guess.name}. Teach it an example like this one below.`}:guess;
     $('#resultIcon').textContent=info.icon;
     $('#badge').textContent=info.name;
     $('#badge').className='badge '+info.cls;
     $('#label').textContent=info.name;
     $('#blurb').textContent=info.blurb;
-    $('#reason').innerHTML=`<strong>Why:</strong> salary ${salary}K is <strong>${sLevel}</strong>, equity ${equityPct.toFixed(2)}% is <strong>${eLevel}</strong>. That pair lands on "${info.name}" in the rule table below.`;
-    $('#stageNote').textContent=stageNoteFor(stage);
-
-    document.querySelectorAll('#ruleGrid td').forEach(td=>td.classList.remove('hi'));
-    const cell=document.querySelector(`#ruleGrid td[data-cell="${sLevel}-${eLevel}"]`);
-    if(cell)cell.classList.add('hi');
+    $('#neighbors').innerHTML=nearest.map((r,i)=>{
+      const li=LABELS[r.x.l];
+      return `<li><span class="rank">#${i+1}</span><span>${li.icon} <strong>${li.name}</strong></span><span>${r.x.s}K &middot; ${r.x.e.toFixed(2)}% &middot; ${r.x.n} people</span><span class="dist">distance ${r.d.toFixed(2)}</span></li>`;
+    }).join('');
+    $('#stageNote').textContent=stageNoteFor(employeeStage(n));
+    renderExamples(nearest.map(r=>r.i));
   }
 
   function loadPreset(i){
     const p=PRESETS[i];
-    salaryEl.value=p.salary;equityEl.value=p.equity;employeesEl.value=p.employees;
+    salaryEl.value=p.s;equityEl.value=Math.round(p.e*100);employeesEl.value=p.n;
     document.querySelectorAll('.preset-btn').forEach((b,idx)=>b.setAttribute('aria-pressed',idx===i));
     render();
   }
@@ -182,6 +230,18 @@
     render();
   }));
   document.querySelectorAll('.preset-btn').forEach((b,i)=>b.addEventListener('click',()=>loadPreset(i)));
+
+  document.querySelectorAll('[data-teach]').forEach(b=>b.addEventListener('click',()=>{
+    const {s,e,n}=currentOffer();
+    examples.push({s,e,n,l:b.dataset.teach,custom:true});
+    $('#teachMsg').textContent=`Added: ${s}K, ${e.toFixed(2)}%, ${n} people is a ${LABELS[b.dataset.teach].name}. It now knows ${examples.length} examples.`;
+    render();
+  }));
+  $('#resetBtn').addEventListener('click',()=>{
+    examples=DEFAULTS.map(x=>({...x}));
+    $('#teachMsg').textContent='Back to the original 16 examples.';
+    render();
+  });
 
   render();
 </script>

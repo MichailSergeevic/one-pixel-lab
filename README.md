@@ -25,28 +25,19 @@ The page takes three numbers about a fictional startup job offer and sorts it in
 
 **Inputs**
 
-| Input | Low | Mid | High |
-|---|---|---|---|
-| Salary (EUR/year) | under 60K | 60-70K | over 70K |
-| Equity (%) | under 0.2 | 0.2-0.4 | over 0.4 |
-
-| Number of employees | Stage |
-|---|---|
-| under 20 | Early stage |
-| 20-50 | Growth phase |
-| over 50 | Scale-up |
+- Salary (EUR/year), 30K to 120K
+- Equity (%), 0 to 1.00
+- Number of employees, 1 to 200
 
 **Labels:** Steady Paycheck, Lottery Ticket, Jackpot, Bust.
 
-**How it decides:** salary and equity are each turned into low/mid/high, then looked up in this table. Company size does not change the label; it only changes the explanation shown under the result.
+**How it decides (nearest example):** the page holds 16 labeled example offers. Each offer becomes three numbers on a 0-1 scale (company size is on a log scale). The classifier finds the 3 examples closest to your offer and they vote; if the vote is split, the single closest example wins. There is no "salary over 70K is high" rule, so different examples give different answers.
 
-| Salary \ Equity | Low | Mid | High |
-|---|---|---|---|
-| Low | Bust | Lottery Ticket | Lottery Ticket |
-| Mid | Steady Paycheck | Steady Paycheck | Jackpot |
-| High | Steady Paycheck | Jackpot | Jackpot |
+**Teaching it:** set the sliders to an offer and click one of the four label buttons to add it as a new example. "Reset examples" returns to the original 16.
 
-**How to use it:** move the three sliders, or click one of the four example buttons, and read the "Why" line under the result.
+**Known limits:** the 16 starting examples are my own made-up offers. If an offer is far from every example (for instance a 1-person company paying 120K with 0% equity), the page says "Not sure" and shows its best guess instead of confidently picking a type. Teaching it a similar example fixes that.
+
+**How to use it:** move the three sliders, or click one of the four example buttons, and read the "Why" list under the result to see which examples voted.
 
 ### Development log
 
@@ -57,3 +48,5 @@ Moments where I directed the work on this page:
 3. **Closed a gap in the labels.** Codex noticed that a low-salary, low-equity offer fit none of my three labels, so I asked for a fourth label, "Bust."
 4. **Asked for a design element.** I wanted a unicorn on the page. Codex tied it to the Jackpot result (a "unicorn" is startup slang for a huge success) and added it to the header and the browser tab icon.
 5. **Changed the wording.** I did not like the word "vibe" in the title and headline, so it was replaced with "Sorter" and "type."
+6. **Questioned whether it was a classifier.** I asked if the page was actually a classifier. Codex explained that a hand-written lookup table is rule-based, not learned, so I chose to switch to a nearest-example method that learns from labeled examples.
+7. **Improved the strange case.** When I tested a 1-person company with 120K salary and 0% equity, the page confidently said "Jackpot." I asked to improve it, so offers far from every example now get "Not sure" with a best guess, and teaching the page a similar example makes it confident again.
