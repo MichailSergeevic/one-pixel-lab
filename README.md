@@ -40,6 +40,10 @@ The page holds 16 example offers that already have a type. When you enter an off
 
 The classifier only knows its examples. When I tested a 1-person company with a 120K salary and 0% equity, it confidently answered "Jackpot" because that offer was far from everything it had seen. I added the "Not sure" answer for offers like this, but the deeper limit remains: my 16 starting examples are made up, so its answers reflect my choices rather than real job offers.
 
+### Bonus: a visual explanation
+
+Below the result is a scatter plot: salary on the horizontal axis, equity on the vertical axis, dot size for company size. Your offer is the black diamond, and dashed lines connect it to the 3 examples currently voting on its type. This turns the "closest 3 examples" idea from a distance number into something you can see directly, and it updates live as you move the sliders or teach new examples.
+
 ### Development log
 
 Moments where I directed the work on this page:
@@ -51,3 +55,4 @@ Moments where I directed the work on this page:
 5. **Changed the wording.** I did not like the word "vibe" in the title and headline, so it was replaced with "Sorter" and "type."
 6. **Questioned whether it was a classifier.** I asked if the page was actually a classifier. Codex explained that a hand-written lookup table is rule-based, not learned, so I chose to switch to a nearest-example method that learns from labeled examples.
 7. **Improved the strange case.** When I tested a 1-person company with 120K salary and 0% equity, the page confidently said "Jackpot." I asked to improve it, so offers far from every example now get "Not sure" with a best guess, and teaching the page a similar example makes it confident again.
+8. **Made the mechanism visible.** The "Why" list showed the 3 nearest examples as text and distance numbers, which is accurate but abstract. I asked for something that makes the idea clearer, not just more complex, so a scatter plot was added showing every example by salary and equity, with your offer highlighted and lines drawn to its voters.

@@ -46,6 +46,14 @@
   .neighbors .rank{font:800 .72rem ui-monospace,monospace;background:var(--acid);color:var(--ink);padding:2px 6px}
   .neighbors .dist{margin-left:auto;font:700 .74rem ui-monospace,monospace;color:#bcbab2}
   .badge.unsure{background:#77766f}
+  .plot-card h2{font-size:1.35rem;letter-spacing:-.03em;margin:0 0 6px}
+  .plot-card>p{margin:0 0 14px;line-height:1.5;font-size:.94rem}
+  .plot-svg-wrap{border:1px solid var(--ink);background:#fbfaf5}
+  .plot-svg-wrap svg{display:block;width:100%;height:auto}
+  .plot-legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:12px;font-size:.8rem}
+  .plot-legend .sw{display:inline-flex;align-items:center;gap:6px}
+  .plot-legend i{width:11px;height:11px;border-radius:50%;border:1px solid var(--ink);display:inline-block;flex:none}
+  .plot-legend i.you{border-radius:2px;transform:rotate(45deg);background:var(--ink);outline:2px solid var(--acid);outline-offset:-1px}
   .teach h2{font-size:1.35rem;letter-spacing:-.03em;margin:0 0 6px}
   .teach p{margin:0 0 12px;line-height:1.5;font-size:.94rem}
   .teach-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -115,6 +123,20 @@
     <p id="stageNote"></p>
   </div>
 
+  <div class="card plot-card">
+    <h2>See the nearest neighbors</h2>
+    <p>Salary is the horizontal axis, equity is the vertical axis, and each dot's size shows company size. The black diamond is your offer; the dashed lines point to the 3 examples that are voting on its type.</p>
+    <div class="plot-svg-wrap"><svg id="plotSvg" viewBox="0 0 340 240" role="img" aria-label="Scatter plot of example offers"></svg></div>
+    <div class="plot-legend">
+      <span class="sw"><i style="background:#2f8f4e"></i> Steady Paycheck</span>
+      <span class="sw"><i style="background:#4f74ff"></i> Lottery Ticket</span>
+      <span class="sw"><i style="background:#ff6b35"></i> Jackpot</span>
+      <span class="sw"><i style="background:#3a3a3a"></i> Bust</span>
+      <span class="sw"><i class="you"></i> Your offer</span>
+      <span class="sw">bigger dot = more employees</span>
+    </div>
+  </div>
+
   <div class="card teach">
     <h2>Teach it a new example</h2>
     <p>Set the sliders to an offer, then tell the classifier what type it is. It will use your example from now on.</p>
@@ -161,6 +183,8 @@
   ];
   const PRESETS=[DEFAULTS[0],DEFAULTS[4],DEFAULTS[8],DEFAULTS[12]];
   const K=3,FAR=0.5;
+  const COLORS={steady:'#2f8f4e',lottery:'#4f74ff',jackpot:'#ff6b35',bust:'#3a3a3a'};
+  const PLOT={x0:50,x1:320,y0:15,y1:200,sMin:30,sMax:120,eMax:1};
   let examples=DEFAULTS.map(x=>({...x}));
 
   const $=s=>document.querySelector(s);
@@ -186,6 +210,45 @@
   }
 
   function currentOffer(){return {s:Number(salaryEl.value),e:Number(equityEl.value)/100,n:Number(employeesEl.value)}}
+
+  function plotX(s){return PLOT.x0+(s-PLOT.sMin)/(PLOT.sMax-PLOT.sMin)*(PLOT.x1-PLOT.x0)}
+  function plotY(e){return PLOT.y1-(e/PLOT.eMax)*(PLOT.y1-PLOT.y0)}
+  function plotR(n){return 4+10*(Math.log(n)/Math.log(200))}
+
+  function renderPlot(offer,nearest){
+    const nearIdx=new Set(nearest.map(r=>r.i));
+    const parts=[];
+    [30,60,90,120].forEach(s=>{
+      const x=plotX(s);
+      parts.push(`<line x1="${x}" y1="${PLOT.y0}" x2="${x}" y2="${PLOT.y1}" stroke="#c9c5b9" stroke-width="1"/>`);
+      parts.push(`<text x="${x}" y="${PLOT.y1+14}" font-size="9" text-anchor="middle" font-family="ui-monospace,monospace" fill="#77766f">${s}K</text>`);
+    });
+    [0,0.25,0.5,0.75,1].forEach(e=>{
+      const y=plotY(e);
+      parts.push(`<line x1="${PLOT.x0}" y1="${y}" x2="${PLOT.x1}" y2="${y}" stroke="#c9c5b9" stroke-width="1"/>`);
+      parts.push(`<text x="${PLOT.x0-6}" y="${y+3}" font-size="9" text-anchor="end" font-family="ui-monospace,monospace" fill="#77766f">${e.toFixed(2)}%</text>`);
+    });
+    parts.push(`<rect x="${PLOT.x0}" y="${PLOT.y0}" width="${PLOT.x1-PLOT.x0}" height="${PLOT.y1-PLOT.y0}" fill="none" stroke="#101114" stroke-width="2"/>`);
+    parts.push(`<text x="${(PLOT.x0+PLOT.x1)/2}" y="232" font-size="10" text-anchor="middle" font-weight="800" fill="#101114">Salary (EUR/year)</text>`);
+    parts.push(`<text x="12" y="${(PLOT.y0+PLOT.y1)/2}" font-size="10" text-anchor="middle" font-weight="800" fill="#101114" transform="rotate(-90 12 ${(PLOT.y0+PLOT.y1)/2})">Equity (%)</text>`);
+
+    examples.forEach((x,i)=>{
+      const cx=plotX(x.s),cy=plotY(x.e),r=plotR(x.n),isNear=nearIdx.has(i);
+      parts.push(`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="${COLORS[x.l]}" fill-opacity="0.85" stroke="#101114" stroke-width="${isNear?2.5:1}"><title>${LABELS[x.l].name}: ${x.s}K, ${x.e.toFixed(2)}%, ${x.n} people</title></circle>`);
+    });
+
+    const ox=plotX(offer.s),oy=plotY(offer.e);
+    nearest.forEach(r=>{
+      const nx=plotX(r.x.s),ny=plotY(r.x.e);
+      parts.push(`<line x1="${ox.toFixed(1)}" y1="${oy.toFixed(1)}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="#ff6b35" stroke-width="1.5" stroke-dasharray="3,3"/>`);
+    });
+    const d=plotR(offer.n)+3,side=d*Math.SQRT2;
+    parts.push(`<rect x="${(ox-side/2).toFixed(1)}" y="${(oy-side/2).toFixed(1)}" width="${side.toFixed(1)}" height="${side.toFixed(1)}" fill="#101114" stroke="#dbff4a" stroke-width="2" transform="rotate(45 ${ox.toFixed(1)} ${oy.toFixed(1)})"/>`);
+
+    const svg=$('#plotSvg');
+    svg.innerHTML=parts.join('');
+    svg.setAttribute('aria-label',`Scatter plot. Your offer is at ${offer.s}K salary, ${offer.e.toFixed(2)}% equity, ${offer.n} employees. Its 3 nearest examples are labeled ${nearest.map(r=>LABELS[r.x.l].name).join(', ')}.`);
+  }
 
   function renderExamples(nearestIdx){
     $('#examplesBody').innerHTML=examples.map((x,i)=>{
@@ -216,6 +279,7 @@
     }).join('');
     $('#stageNote').textContent=stageNoteFor(employeeStage(n));
     renderExamples(nearest.map(r=>r.i));
+    renderPlot({s,e,n},nearest);
   }
 
   function loadPreset(i){
