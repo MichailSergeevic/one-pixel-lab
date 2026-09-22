@@ -21,30 +21,31 @@ The page shows twelve grayscale pixels. You label each one "dark" or "light," th
 
 **File:** `startup-offer.html`
 
-The page takes three numbers about a fictional startup job offer and sorts it into one of four playful types. It is a toy classifier, not financial advice.
+### Name and purpose
 
-**Inputs**
+**Startup Offer Sorter** is a tiny classifier that sorts a fictional startup job offer into one of four playful types: **Steady Paycheck**, **Lottery Ticket**, **Jackpot**, or **Bust**. Its purpose is to show that a classifier can weigh several inputs at once (salary, equity, and company size) and that its answers come from the labeled examples it has seen. It is a toy, not financial advice.
 
-- Salary (EUR/year), 30K to 120K
-- Equity (%), 0 to 1.00
-- Number of employees, 1 to 200
+### How to open and use it
 
-**Labels:** Steady Paycheck, Lottery Ticket, Jackpot, Bust.
+1. Open `startup-offer.html` in a web browser (double-click the file). No build step, server, or API key is needed.
+2. Move the three sliders: salary (30K to 120K EUR), equity (0 to 1.00%), and number of employees (1 to 200). Or click one of the four example buttons.
+3. Read the result and the "Why" list, which shows the 3 example offers that were closest to yours.
+4. To teach it, set the sliders to an offer, then click the label you think fits. It adds your offer as a new example. "Reset examples" goes back to the original 16.
 
-**How it decides (nearest example):** the page holds 16 labeled example offers. Each offer becomes three numbers on a 0-1 scale (company size is on a log scale). The classifier finds the 3 examples closest to your offer and they vote; if the vote is split, the single closest example wins. There is no "salary over 70K is high" rule, so different examples give different answers.
+### How it makes a prediction
 
-**Teaching it:** set the sliders to an offer and click one of the four label buttons to add it as a new example. "Reset examples" returns to the original 16.
+The page holds 16 example offers that already have a type. When you enter an offer, it finds the 3 examples most similar to yours (close in salary, equity, and company size) and lets them vote. The type with the most votes wins, and if the vote is split, the single most similar example wins. If even the most similar example is far away, it says "Not sure" and shows its best guess instead. It has no built-in rule like "salary over 70K is high," so different examples give different answers.
 
-**Known limits:** the 16 starting examples are my own made-up offers. If an offer is far from every example (for instance a 1-person company paying 120K with 0% equity), the page says "Not sure" and shows its best guess instead of confidently picking a type. Teaching it a similar example fixes that.
+### A limitation I discovered
 
-**How to use it:** move the three sliders, or click one of the four example buttons, and read the "Why" list under the result to see which examples voted.
+The classifier only knows its examples. When I tested a 1-person company with a 120K salary and 0% equity, it confidently answered "Jackpot" because that offer was far from everything it had seen. I added the "Not sure" answer for offers like this, but the deeper limit remains: my 16 starting examples are made up, so its answers reflect my choices rather than real job offers.
 
 ### Development log
 
 Moments where I directed the work on this page:
 
 1. **Chose a different idea.** I first proposed classifying universities into tiers by ranking. Codex pointed out that this is just One Pixel ML again (one number, one cutoff) and may feel high-stakes, so I switched to a startup job offer with several inputs (salary, equity, number of employees) and playful labels (Steady Paycheck, Lottery Ticket, Jackpot) instead of "good" or "bad."
-2. **Set the rules myself.** I decided the three inputs (employees instead of funding stage) and defined the low/mid/high cutoffs for each: salary under 60K / 60-70K / over 70K, equity under 0.2% / 0.2-0.4% / over 0.4%, and under 20 / 20-50 / over 50 employees.
+2. **Set the rules myself.** I decided the three inputs (employees instead of funding stage) and defined the low/mid/high cutoffs for each: salary under 60K / 60-70K / over 70K, equity under 0.2% / 0.2-0.4% / over 0.4%, and under 20 / 20-50 / over 50 employees. The first version used these as a lookup table.
 3. **Closed a gap in the labels.** Codex noticed that a low-salary, low-equity offer fit none of my three labels, so I asked for a fourth label, "Bust."
 4. **Asked for a design element.** I wanted a unicorn on the page. Codex tied it to the Jackpot result (a "unicorn" is startup slang for a huge success) and added it to the header and the browser tab icon.
 5. **Changed the wording.** I did not like the word "vibe" in the title and headline, so it was replaced with "Sorter" and "type."
